@@ -7,12 +7,12 @@ import {
   useReducer,
   useState,
 } from 'react'
+
 import {
   addNewCycleAction,
   interruptCycleAction,
   markCycleAsFinishedAction,
 } from '../reducers/cycles/actions'
-
 import { cyclesReducer } from '../reducers/cycles/reducer'
 import { Cycle } from '../reducers/cycles/types'
 
@@ -66,7 +66,7 @@ export function CyclesContextProvider({
   })
 
   function markCycleAsFinished() {
-    dispatch(markCycleAsFinishedAction)
+    dispatch(markCycleAsFinishedAction())
   }
 
   function updateSecondsPassed(seconds: number) {
@@ -87,7 +87,7 @@ export function CyclesContextProvider({
   }
 
   function interruptCycle() {
-    dispatch(interruptCycleAction)
+    dispatch(interruptCycleAction())
   }
 
   useEffect(() => {
