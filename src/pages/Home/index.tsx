@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Play } from 'phosphor-react'
 import { useForm } from 'react-hook-form'
 import * as zod from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { differenceInSeconds } from 'date-fns'
 
 import {
   CountdownContainer,
@@ -18,7 +19,7 @@ const newCycleFormSchema = zod.object({
   task: zod.string().min(1, 'Informe a tarefa'),
   duration: zod
     .number()
-    .min(5, 'O ciclo precisa ser de no mínimo 5 minutos.')
+    .min(1, 'O ciclo precisa ser de no mínimo 5 minutos.')
     .max(60, 'O ciclo precisa ser de no máximo 60 minutos.'),
 })
 
@@ -28,12 +29,23 @@ interface Cycle {
   id: string
   task: string
   duration: number
+  startDate: Date
 }
 
 export function Home() {
   const [cycles, setCycles] = useState<Cycle[]>([])
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
+  const [secondsPassed, setSecondsPassed] = useState(0)
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
+  const cycleDurationInSeconds = activeCycle ? activeCycle.duration * 60 : 0
+  const cycleTotalSeconds = activeCycle
+    ? cycleDurationInSeconds - secondsPassed
+    : 0
+  const currentCycleMinutesDirty = Math.floor(cycleTotalSeconds / 60)
+  const currentCycleSecondsDirty = cycleTotalSeconds % 60
+
+  const currentCycleMinutes = String(currentCycleMinutesDirty).padStart(2, '0')
+  const currentCycleSeconds = String(currentCycleSecondsDirty).padStart(2, '0')
   const { register, handleSubmit, watch, reset } = useForm<CreateNewCycleForm>({
     resolver: zodResolver(newCycleFormSchema),
     defaultValues: {
@@ -51,12 +63,21 @@ export function Home() {
       id,
       task,
       duration,
+      startDate: new Date(),
     }
     setActiveCycleId(id)
 
     setCycles((previousCycles) => [...previousCycles, newCycle])
     reset()
   }
+
+  useEffect(() => {
+    if (activeCycle) {
+      setInterval(() => {
+        setSecondsPassed(differenceInSeconds(new Date(), activeCycle.startDate))
+      }, 1000)
+    }
+  }, [activeCycle])
 
   return (
     <HomeContainer>
@@ -82,7 +103,7 @@ export function Home() {
             id="duration"
             placeholder="00"
             step={5}
-            min={5}
+            min={1}
             max={60}
             {...register('duration', { valueAsNumber: true })}
           />
@@ -91,11 +112,11 @@ export function Home() {
         </FormContainer>
 
         <CountdownContainer>
-          <span>0</span>
-          <span>0</span>
+          <span>{currentCycleMinutes[0]}</span>
+          <span>{currentCycleMinutes[1]}</span>
           <Separator>:</Separator>
-          <span>0</span>
-          <span>0</span>
+          <span>{currentCycleSeconds[0]}</span>
+          <span>{currentCycleSeconds[1]}</span>
         </CountdownContainer>
 
         <StartCountdownButton disabled={isSubmitDisabled} type="submit">
