@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Play } from 'phosphor-react'
 import { useForm } from 'react-hook-form'
 import * as zod from 'zod'
@@ -7,7 +8,7 @@ import {
   CountdownContainer,
   FormContainer,
   HomeContainer,
-  MinutesAmountInput,
+  DurationInput,
   Separator,
   StartCountdownButton,
   TaskInput,
@@ -15,7 +16,7 @@ import {
 
 const newCycleFormSchema = zod.object({
   task: zod.string().min(1, 'Informe a tarefa'),
-  minutesAmount: zod
+  duration: zod
     .number()
     .min(5, 'O ciclo precisa ser de no mínimo 5 minutos.')
     .max(60, 'O ciclo precisa ser de no máximo 60 minutos.'),
@@ -23,19 +24,37 @@ const newCycleFormSchema = zod.object({
 
 type CreateNewCycleForm = zod.infer<typeof newCycleFormSchema>
 
+interface Cycle {
+  id: string
+  task: string
+  duration: number
+}
+
 export function Home() {
+  const [cycles, setCycles] = useState<Cycle[]>([])
+  const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
   const { register, handleSubmit, watch, reset } = useForm<CreateNewCycleForm>({
     resolver: zodResolver(newCycleFormSchema),
     defaultValues: {
       task: '',
-      minutesAmount: 0,
+      duration: 0,
     },
   })
   const task = watch('task')
   const isSubmitDisabled = !task
 
-  function handleCreateNewCycle({ task, minutesAmount }: CreateNewCycleForm) {
-    console.log({ task, minutesAmount })
+  function handleCreateNewCycle({ task, duration }: CreateNewCycleForm) {
+    const id = new Date().getTime().toString()
+
+    const newCycle: Cycle = {
+      id,
+      task,
+      duration,
+    }
+    setActiveCycleId(id)
+
+    setCycles((previousCycles) => [...previousCycles, newCycle])
     reset()
   }
 
@@ -57,15 +76,15 @@ export function Home() {
             <option value="Banana"></option>
           </datalist>
 
-          <label htmlFor="minutesAmount">durante</label>
-          <MinutesAmountInput
+          <label htmlFor="duration">durante</label>
+          <DurationInput
             type="number"
-            id="minutesAmount"
+            id="duration"
             placeholder="00"
             step={5}
             min={5}
             max={60}
-            {...register('minutesAmount', { valueAsNumber: true })}
+            {...register('duration', { valueAsNumber: true })}
           />
 
           <span>minutos.</span>
