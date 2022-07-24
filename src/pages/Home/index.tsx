@@ -19,7 +19,7 @@ const newCycleFormSchema = zod.object({
   task: zod.string().min(1, 'Informe a tarefa'),
   duration: zod
     .number()
-    .min(1, 'O ciclo precisa ser de no mínimo 5 minutos.')
+    .min(5, 'O ciclo precisa ser de no mínimo 5 minutos.')
     .max(60, 'O ciclo precisa ser de no máximo 60 minutos.'),
 })
 
@@ -66,18 +66,29 @@ export function Home() {
       startDate: new Date(),
     }
     setActiveCycleId(id)
+    setSecondsPassed(0)
 
     setCycles((previousCycles) => [...previousCycles, newCycle])
     reset()
   }
 
   useEffect(() => {
+    let interval: number
     if (activeCycle) {
-      setInterval(() => {
+      interval = setInterval(() => {
         setSecondsPassed(differenceInSeconds(new Date(), activeCycle.startDate))
       }, 1000)
     }
+
+    return () => {
+      clearInterval(interval)
+    }
   }, [activeCycle])
+
+  useEffect(() => {
+    if (activeCycle)
+      document.title = `${currentCycleMinutes}:${currentCycleSeconds}`
+  }, [activeCycle, currentCycleMinutes, currentCycleSeconds])
 
   return (
     <HomeContainer>
@@ -103,7 +114,7 @@ export function Home() {
             id="duration"
             placeholder="00"
             step={5}
-            min={1}
+            min={5}
             max={60}
             {...register('duration', { valueAsNumber: true })}
           />
